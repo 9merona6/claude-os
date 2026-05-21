@@ -33,12 +33,16 @@ jobs:
       - name: Install frontend deps
         run: npm ci
 
-      - name: Install sidecar prod deps
-        run: npm ci --omit=dev
+      - name: Install sidecar deps (all)
+        run: npm ci
         working-directory: ./sidecar
 
       - name: Build sidecar (tsc)
         run: npm run build
+        working-directory: ./sidecar
+
+      - name: Prune sidecar dev deps (after build)
+        run: npm prune --omit=dev
         working-directory: ./sidecar
 
       - name: Build Tauri app + sign updater artifacts
