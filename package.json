@@ -1,7 +1,7 @@
 {
   "name": "my-claude-terminal",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "concurrently -n SIDECAR,FRONTEND -c yellow,cyan \"npm:dev:sidecar\" \"npm:dev:frontend\"",
