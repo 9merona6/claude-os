@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Sidecar build
+sidecar/dist/
+sidecar/node_modules/
+
+# Tauri signing private key — NEVER commit
+src-tauri/updater.key
+src-tauri/binaries/

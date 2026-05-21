@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Install sidecar prod deps
+        run: npm ci --omit=dev
+        working-directory: ./sidecar
+
+      - name: Build sidecar (tsc)
+        run: npm run build
+        working-directory: ./sidecar
+
+      - name: Build Tauri app + sign updater artifacts
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "My Claude Terminal ${{ github.ref_name }}"
+          releaseBody: |
+            ## What's changed
+            See commits since previous release.
+
+            ### Install
+            Download the `.msi` installer below and run it. Requires Node.js 20+
+            and `@anthropic-ai/claude-code` installed globally + logged in.
+
+            Existing installs will auto-update via the in-app banner.
+          releaseDraft: false
+          prerelease: false
+
+      - name: Generate latest.json manifest
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" | Select-Object -First 1
+          $sigPath = "$($msiPath.FullName).sig"
+          $signature = Get-Content $sigPath -Raw
+          $msiName = $msiPath.Name
+          $manifest = @{
+            version = $version
+            notes = "See GitHub release notes"
+            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            platforms = @{
+              "windows-x86_64" = @{
+                signature = $signature.Trim()
+                url = "https://github.com/${{ github.repository }}/releases/download/$tag/$msiName"
+              }
+            }
+          }
+          $manifest | ConvertTo-Json -Depth 10 | Out-File -FilePath latest.json -Encoding utf8
+
+      - name: Upload latest.json to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: latest.json
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
