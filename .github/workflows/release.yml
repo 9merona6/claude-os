@@ -68,32 +68,6 @@ jobs:
           releaseDraft: false
           prerelease: false
 
-      - name: Generate latest.json manifest
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $version = $tag.TrimStart('v')
-          $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi/*.msi" | Select-Object -First 1
-          $sigPath = "$($msiPath.FullName).sig"
-          $signature = Get-Content $sigPath -Raw
-          $msiName = $msiPath.Name
-          $manifest = @{
-            version = $version
-            notes = "See GitHub release notes"
-            pub_date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-            platforms = @{
-              "windows-x86_64" = @{
-                signature = $signature.Trim()
-                url = "https://github.com/${{ github.repository }}/releases/download/$tag/$msiName"
-              }
-            }
-          }
-          $manifest | ConvertTo-Json -Depth 10 | Out-File -FilePath latest.json -Encoding utf8
-
-      - name: Upload latest.json to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: latest.json
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # latest.json is generated automatically by tauri-action when
+      # includeUpdaterJson is true (default). It picks the NSIS installer for
+      # Windows, which supports silent updates — no Windows Installer dialog.
