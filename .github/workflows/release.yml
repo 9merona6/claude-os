@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write  # required to create the GitHub Release + upload .msi/latest.json
 
     steps:
       - name: Checkout
