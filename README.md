@@ -6,7 +6,7 @@ Tauri + React + `@anthropic-ai/claude-agent-sdk` 기반의 커스텀 터미널.
 ┌─────────────────────────────────────┬──────────────┐
 │  Terminal (chat-style)              │  📋 Plan     │
 │                                     │              │
-│  $ refactor src/auth.ts             │  ☑ Read      │
+│  $ refactor src/auth.ts             │  ☑ Read     │
 │  > Read(auth.ts)                    │  ◐ Refactor  │
 │  ✓ ...                              │  ☐ Test      │
 │                                     ├──────────────┤

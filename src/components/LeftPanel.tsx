@@ -468,7 +468,7 @@ function RenameInput({
 interface NewTabFormProps {
   suggestions: { name: string; cwd: string }[];
   defaultCwd: string;
-  forwardRef: React.RefObject<HTMLDivElement | null>;
+  forwardRef: React.RefObject<HTMLDivElement>;
   onCancel: () => void;
   onCreate: (name: string, cwd: string) => void;
 }
