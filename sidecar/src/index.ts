@@ -741,10 +741,20 @@ async function loadAndEmitHistory(
 
   const lines = raw.split("\n").filter(Boolean);
 
-  // First pass: count user messages so we know where to start emitting
+  // First pass: count REAL user prompts (string content), not tool_result
+  // user messages. Claude Code sessions have many tool_result user lines,
+  // and if we counted those, startAtUserIdx would skip past all real prompts.
   let userMsgsTotal = 0;
   for (const line of lines) {
-    if (line.includes('"type":"user"')) userMsgsTotal++;
+    if (!line.includes('"type":"user"')) continue;
+    try {
+      const obj = JSON.parse(line);
+      if (obj.type === "user" && typeof obj.message?.content === "string") {
+        userMsgsTotal++;
+      }
+    } catch {
+      // skip
+    }
   }
   const startAtUserIdx = Math.max(0, userMsgsTotal - MAX_HISTORY_USER_MESSAGES);
 

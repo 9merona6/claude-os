@@ -784,6 +784,10 @@ html, body, #root {
   margin-bottom: 18px;
   position: relative;
 }
+.msg.no-head {
+  margin-top: -10px;  /* pull up to look continuous with previous claude entry */
+  margin-bottom: 10px;
+}
 .msg-head {
   display: flex;
   align-items: center;
@@ -839,6 +843,139 @@ html, body, #root {
   border-radius: 0 2px 2px 0;
   font-size: 11px;
 }
+
+/* Expanded tool card (Write/Edit/Bash with preview) */
+.tool-call.expanded {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px 12px;
+}
+.tool-call-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+.tool-call-header .tool-name {
+  color: var(--cyan);
+  font-weight: 500;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+}
+.tool-call-header .tool-args {
+  color: var(--teal);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.tool-call-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tool-call-body { margin-top: 6px; }
+
+.tool-toggle {
+  background: transparent;
+  border: 1px solid rgba(107, 240, 255, 0.15);
+  color: var(--cyan);
+  font-size: 10px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  padding: 0;
+}
+.tool-toggle:hover {
+  background: rgba(107, 240, 255, 0.1);
+  box-shadow: var(--glow-soft);
+}
+
+.tool-snippet {
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(0, 8, 14, 0.5);
+  border: 1px solid rgba(107, 240, 255, 0.1);
+  border-radius: 2px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+  position: relative;
+}
+.tool-snippet-meta {
+  display: inline-block;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(107, 240, 255, 0.12);
+  font-size: 9px;
+  color: var(--text-faint);
+  font-style: italic;
+  letter-spacing: 0.1em;
+}
+
+.tool-diff {
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 8, 14, 0.5);
+  border: 1px solid rgba(107, 240, 255, 0.1);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+.diff-line {
+  display: flex;
+  white-space: pre;
+  padding: 0 4px;
+}
+.diff-line.context { color: var(--text); }
+.diff-line.del {
+  color: #f5b8c0;
+  background: rgba(170, 0, 30, 0.35);
+}
+.diff-line.add {
+  color: #b8f5cc;
+  background: rgba(0, 110, 50, 0.35);
+}
+.diff-lineno {
+  color: var(--text-faint);
+  text-align: right;
+  padding-right: 8px;
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(107, 240, 255, 0.08);
+  margin-right: 6px;
+}
+.diff-marker {
+  width: 1ch;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.diff-text { flex: 1; }
+
+.tool-diff-summary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  margin-left: auto;
+  flex-shrink: 0;
+}
 .tool-call .tool-name { color: var(--cyan); font-weight: 500; }
 .tool-call .tool-args {
   color: var(--text-dim);
@@ -867,6 +1004,81 @@ html, body, #root {
   overflow-x: auto;
   color: var(--text-dim);
   white-space: pre-wrap;
+}
+
+/* ============ Markdown rendering inside .msg-body.md ============ */
+.msg-body.md { font-family: 'JetBrains Mono', monospace; }
+.msg-body.md p { margin: 6px 0; }
+.msg-body.md strong {
+  color: var(--cyan);
+  font-weight: 700;
+}
+.msg-body.md em {
+  color: var(--magenta);
+  font-style: italic;
+}
+.msg-body.md h1, .msg-body.md h2, .msg-body.md h3,
+.msg-body.md h4, .msg-body.md h5, .msg-body.md h6 {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--cyan);
+  text-shadow: var(--glow-soft);
+  margin: 14px 0 6px;
+  letter-spacing: 0.1em;
+}
+.msg-body.md h1 { font-size: 16px; }
+.msg-body.md h2 { font-size: 14px; }
+.msg-body.md h3 { font-size: 13px; }
+.msg-body.md h4, .msg-body.md h5, .msg-body.md h6 { font-size: 12px; }
+.msg-body.md ul, .msg-body.md ol {
+  margin: 6px 0;
+  padding-left: 22px;
+}
+.msg-body.md ul li::marker { color: var(--cyan); }
+.msg-body.md ol li::marker { color: var(--teal); }
+.msg-body.md li { margin: 3px 0; }
+.msg-body.md a {
+  color: var(--teal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.msg-body.md a:hover { color: var(--cyan); }
+.msg-body.md blockquote {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-left: 2px solid var(--cyan);
+  background: rgba(107, 240, 255, 0.04);
+  color: var(--text-dim);
+  font-style: italic;
+}
+.msg-body.md hr {
+  border: none;
+  border-top: 1px dashed rgba(107, 240, 255, 0.2);
+  margin: 12px 0;
+}
+.msg-body.md table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 11px;
+}
+.msg-body.md th, .msg-body.md td {
+  border: 1px solid rgba(107, 240, 255, 0.15);
+  padding: 4px 8px;
+  text-align: left;
+}
+.msg-body.md th {
+  background: rgba(107, 240, 255, 0.08);
+  color: var(--cyan);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.md-inline-code {
+  color: var(--teal);
+  background: rgba(74, 216, 196, 0.1);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* ============ RIGHT PANEL ============ */

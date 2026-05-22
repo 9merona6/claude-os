@@ -15,6 +15,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need full history so annotated tag message is available
+
+      - name: Extract release notes from tag
+        id: notes
+        shell: bash
+        run: |
+          MSG=$(git for-each-ref refs/tags/${{ github.ref_name }} --format='%(contents)' | sed '/^-----BEGIN/,$d')
+          if [ -z "$MSG" ] || [ "$MSG" = "${{ github.ref_name }}" ]; then
+            MSG="See commits since previous release."
+          fi
+          {
+            echo "body<<NOTES_EOF"
+            echo "## What's changed"
+            echo ""
+            echo "$MSG"
+            echo ""
+            echo "### Install"
+            echo "Download the \`.exe\` installer below and run it. Requires Node.js 20+ and \`@anthropic-ai/claude-code\` installed globally + logged in."
+            echo ""
+            echo "Existing installs will auto-update silently via the in-app banner."
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -55,16 +78,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "My Claude Terminal ${{ github.ref_name }}"
-          releaseBody: |
-            ## What's changed
-            See commits since previous release.
-
-            ### Install
-            Download the `.msi` installer below and run it. Requires Node.js 20+
-            and `@anthropic-ai/claude-code` installed globally + logged in.
-
-            Existing installs will auto-update via the in-app banner.
+          releaseName: "Claude OS ${{ github.ref_name }}"
+          releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
           prerelease: false
 
