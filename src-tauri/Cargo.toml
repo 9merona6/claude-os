@@ -1,6 +1,6 @@
 [package]
 name = "claude-os"
-version = "0.1.4"
+version = "0.1.5"
 description = "Custom terminal for Claude Agent SDK"
 edition = "2021"
 

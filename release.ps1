@@ -17,22 +17,31 @@ Write-Host "==> Committing v$v" -ForegroundColor Cyan
 git add .
 git commit -m "release v$v"
 
-# Collect release notes via a temp file edited in Notepad
+# Collect release notes via a temp file edited in Notepad.
+# Write template with UTF-8 + BOM via .NET API so Notepad detects encoding
+# correctly and any Korean you type is preserved.
 $notesFile = Join-Path $env:TEMP "claude-os-release-notes-$v.md"
-@"
-# v$v release notes
+$template = @"
+# Release notes for v$v
 #
-# - 라인 하나에 한 항목씩 작성 (예: - 사이드카 spawn 버그 수정)
-# - 이 파일을 저장하고 닫으면 그 내용이 릴리스 설명에 들어갑니다
-# - 빈 파일로 닫으면 기본 메시지가 들어감
-# - '#' 으로 시작하는 줄은 주석으로 무시됨
+# Write one bullet per line below this block. Lines starting with '#' are ignored.
+# Save and close Notepad to continue. Leave empty for a default message.
+# Korean / English both fine.
+#
+# Example:
+#   - sidecar spawn buf fix
+#   - markdown rendering for code blocks
+#   - silent updates on Windows
 
-"@ | Set-Content -Path $notesFile -Encoding UTF8
+"@
+$utf8WithBom = New-Object System.Text.UTF8Encoding $true
+[System.IO.File]::WriteAllText($notesFile, $template, $utf8WithBom)
 
 Write-Host "==> Opening Notepad for release notes (save and close when done)" -ForegroundColor Cyan
 Start-Process notepad.exe -ArgumentList "`"$notesFile`"" -Wait
 
-$rawNotes = Get-Content $notesFile -Raw -Encoding UTF8
+# Read back as UTF-8 (handles BOM automatically)
+$rawNotes = [System.IO.File]::ReadAllText($notesFile, [System.Text.Encoding]::UTF8)
 $lines = ($rawNotes -split "`r?`n") |
     Where-Object { $_ -notmatch '^\s*#' } |
     Where-Object { $_.Trim() -ne '' }
