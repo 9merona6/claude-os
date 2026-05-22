@@ -1,6 +1,6 @@
 # Claude OS
 
-Holographic desktop terminal for [Claude Code](https://docs.anthropic.com/claude-code) — a cyberpunk-styled GUI built on Tauri + React, wrapping the official [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk).
+[Claude Code](https://docs.anthropic.com/claude-code) 용 홀로그래픽 데스크톱 터미널. Tauri + React 로 만든 사이버펑크 GUI 로, 공식 [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk) 를 감싸고 있습니다.
 
 ```
 ┌─────────────┬───────────────────────────────────────┬──────────────┐
@@ -19,113 +19,38 @@ Holographic desktop terminal for [Claude Code](https://docs.anthropic.com/claude
 └─────────────┴───────────────────────────────────────┴──────────────┘
 ```
 
-## Disclaimer
+## 안내
 
-**Claude OS is unofficial software.** It is not affiliated with, endorsed by, sponsored by, or otherwise connected to Anthropic, PBC. "Claude" is a trademark of Anthropic; this project uses the name solely to identify the underlying technology it wraps.
+**Claude OS 는 비공식(unofficial) 소프트웨어입니다.** Anthropic, PBC 와 제휴·후원·승인·연관 관계가 없습니다. "Claude" 는 Anthropic 의 상표이며, 본 프로젝트는 그 기반 기술을 식별하기 위한 용도로만 해당 명칭을 사용합니다.
 
-Users supply their own Claude Pro / Max / Team subscription via the standard Claude Code CLI login flow. No credentials, API access, or quota are bundled with this app — the wrapper communicates with the locally installed Claude Code CLI on your machine.
+사용자는 본인의 Claude Pro / Max / Team 구독으로 표준 Claude Code CLI 로그인 절차를 거쳐 사용합니다. 이 앱에는 어떠한 인증 정보, API 접근 권한, 사용량(quota) 도 포함되어 있지 않습니다.
 
-## Install (end users)
+## 설치
 
-Tested on Windows 10/11.
+Windows 10/11 에서 테스트되었습니다.
 
-1. Install [Node.js 20+](https://nodejs.org)
-2. Install Claude Code globally and log in:
+1. [Node.js 20 이상](https://nodejs.org) 설치
+2. Claude Code 를 전역 설치하고 로그인:
    ```sh
    npm install -g @anthropic-ai/claude-code
    claude
-   # → /login → opens browser to authenticate with your Claude account
+   # → /login → 브라우저에서 Claude 계정으로 인증
    ```
-3. Download the latest `.exe` installer from the [Releases page](https://github.com/lee-jongmyoung/my-claude-terminal/releases/latest) and run it.
-4. Launch from Start Menu. Auto-updates apply silently in the background on future releases.
+3. [Releases 페이지](https://github.com/lee-jongmyoung/my-claude-terminal/releases/latest) 에서 최신 `.exe` 인스톨러를 받아 실행
+4. 시작 메뉴에서 실행. 이후 업데이트는 백그라운드에서 자동으로(완전 무음) 적용됩니다.
 
-## Features
+## 주요 기능
 
-- **Holographic terminal UI** — cyberpunk theme, neural orb status indicator, ambient scanlines
-- **Multi-session tabs** — auto-detected from `~/.claude/projects/` with rename / delete
-- **Real-time telemetry**
-  - Plan-quota usage (5h window + weekly) from the Claude OAuth `/usage` endpoint
-  - 7-day daily token bar chart
-  - Tool-call counter per session
-  - Live context-window meter (0 / 1M)
-- **Rich response rendering**
-  - Markdown (headers, bold, italic, lists, tables, blockquotes)
-  - Syntax-highlighted code blocks (Prism atom-dark theme)
-  - Line-by-line diffs with line numbers for `Edit` calls
-  - Collapsible tool-call cards (Write, Edit, Bash, Read, …)
-- **Per-session model selection** — Opus / Sonnet / Haiku via the in-app dropdown
-- **Auto-update** — silent in-app updater (Tauri updater plugin) signed with Ed25519
-- **Native folder picker** for new sessions
+- 홀로그래픽 터미널 UI — 사이버펑크 테마, neural orb 상태 표시기, 앰비언트 스캔라인
+- 멀티 세션 탭 — `~/.claude/projects/` 에서 자동 감지, 이름 변경 / 삭제 가능
+- 실시간 텔레메트리 — Plan 할당량 (5시간 + 주간), 7일 토큰 차트, 툴 호출 카운터, 컨텍스트 미터
+- 풍부한 응답 렌더링 — 마크다운, 코드 문법 강조, 라인 단위 diff, 접고 펼칠 수 있는 툴 카드
+- 세션별 모델 선택 (Opus / Sonnet / Haiku)
+- 자동 업데이트 — Ed25519 서명된 무음 인앱 업데이터
+- 폴더 선택 네이티브 다이얼로그
 
-## Architecture
+## 라이선스
 
-```
-┌──────────────────────────┐  ws://127.0.0.1:7891  ┌────────────────────┐
-│   Tauri shell (Rust)     │  ────────────────────▶│  Sidecar (Node.js) │
-│   React frontend (Vite)  │ ◀──────────────────── │  @anthropic-ai/    │
-│                          │     events / streams   │  claude-agent-sdk  │
-└──────────────────────────┘                        └────────────────────┘
-                                                            │
-                                                            ▼
-                                                   Claude Code CLI
-                                                   (local OAuth session)
-```
+[MIT](LICENSE) — 개인 취미 프로젝트이며 별도의 지원은 제공되지 않습니다.
 
-- `src/` — React frontend (Vite, TypeScript)
-- `sidecar/` — Node.js WebSocket bridge to the Agent SDK
-- `src-tauri/` — Tauri native shell (Rust)
-
-## Development
-
-### Prerequisites
-- Node.js 20+
-- Rust toolchain ([rustup.rs](https://rustup.rs))
-- Windows: Visual Studio Build Tools with "Desktop development with C++"
-- Tauri prerequisites: <https://tauri.app/start/prerequisites/>
-
-### Setup
-
-```powershell
-git clone https://github.com/lee-jongmyoung/my-claude-terminal.git
-cd my-claude-terminal
-npm install
-cd sidecar && npm install && cd ..
-
-# One-time CLI installer for the project
-.\install-cli.ps1
-. $PROFILE
-```
-
-### CLI commands
-
-After running `install-cli.ps1`, `claude-os` is available from any PowerShell prompt:
-
-| Command | What it does |
-|---|---|
-| `claude-os dev` | Dev mode — kills stale processes, builds sidecar if missing, runs `tauri dev` |
-| `claude-os build` | Local production build (`.exe` + `.msi`) |
-| `claude-os release` | Bump patch version → opens Notepad for release notes → commits, tags, pushes |
-| `claude-os release minor` | Same but bumps minor version |
-| `claude-os release major` | Same but bumps major version |
-
-### Releasing
-
-`claude-os release` triggers `.github/workflows/release.yml` which:
-1. Builds Tauri + bundles the Node sidecar as resources
-2. Signs the `.exe` + `.msi` with the Ed25519 updater key
-3. Publishes a GitHub release with the tag annotation as the changelog
-4. Generates `latest.json` for the in-app updater
-
-## License
-
-[MIT](LICENSE) © contributors.
-
-This project uses several third-party packages, each under its own license. Notably:
-- Tauri (Apache-2.0 / MIT)
-- React (MIT)
-- `@anthropic-ai/claude-agent-sdk` (see package's LICENSE)
-- `recharts`, `react-markdown`, `react-syntax-highlighter`, `diff` (all MIT)
-
-## Status
-
-Personal hobby project. No support guarantees. Feel free to open issues or fork.
+이 프로젝트는 다음과 같은 서드파티 패키지를 사용하며, 각각의 라이선스를 따릅니다: Tauri, React, `@anthropic-ai/claude-agent-sdk`, recharts, react-markdown, react-syntax-highlighter, diff.
