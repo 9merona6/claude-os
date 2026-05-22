@@ -1,118 +1,131 @@
-# my-claude-terminal
+# Claude OS
 
-Tauri + React + `@anthropic-ai/claude-agent-sdk` 기반의 커스텀 터미널.
+Holographic desktop terminal for [Claude Code](https://docs.anthropic.com/claude-code) — a cyberpunk-styled GUI built on Tauri + React, wrapping the official [`@anthropic-ai/claude-agent-sdk`](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk).
 
 ```
-┌─────────────────────────────────────┬──────────────┐
-│  Terminal (chat-style)              │  📋 Plan     │
-│                                     │              │
-│  $ refactor src/auth.ts             │  ☑ Read     │
-│  > Read(auth.ts)                    │  ◐ Refactor  │
-│  ✓ ...                              │  ☐ Test      │
-│                                     ├──────────────┤
-│  > _                                │  💰 Usage    │
-│                                     │  [chart]     │
-└─────────────────────────────────────┴──────────────┘
+┌─────────────┬───────────────────────────────────────┬──────────────┐
+│  SESSIONS   │  NEURAL INTERFACE      [OPUS 4.7  ▾]  │  TELEMETRY   │
+│             │                                       │              │
+│  · dev.ljm  │       ◐  IDLE                         │  Plan quota  │
+│  · champ-1  │                                       │  5h  ▓▓░░░░  │
+│  · champ-2  │   YOU  prompt                         │  Weekly ░░░  │
+│             │   > refactor src/auth.ts              │              │
+│   + NEW     │                                       │  Daily 7d    │
+│             │   CLAUDE response                     │  ▆▂▃▅▇█▃     │
+│  PLAN/TODO  │   ▼ Update (src/auth.ts)              │              │
+│  ☑ Read     │     1 - const x = 1                   │  Tools 152x  │
+│  ◐ Refactor │     1 + const x = 2                   │              │
+│  ☐ Test     │                                       │  Context 0/1M│
+└─────────────┴───────────────────────────────────────┴──────────────┘
 ```
 
-## 구조
+## Disclaimer
 
-- **`src/`** — React 프론트엔드 (Vite)
-- **`sidecar/`** — Node.js WebSocket 서버 (Agent SDK 래핑)
-- **`src-tauri/`** — Tauri 데스크톱 셸 (Rust)
+**Claude OS is unofficial software.** It is not affiliated with, endorsed by, sponsored by, or otherwise connected to Anthropic, PBC. "Claude" is a trademark of Anthropic; this project uses the name solely to identify the underlying technology it wraps.
 
-프론트엔드는 `ws://127.0.0.1:7891` 로 사이드카에 붙어서 이벤트를 받습니다.
+Users supply their own Claude Pro / Max / Team subscription via the standard Claude Code CLI login flow. No credentials, API access, or quota are bundled with this app — the wrapper communicates with the locally installed Claude Code CLI on your machine.
 
-## 사전 요구사항
+## Install (end users)
 
-- **Node.js 20+**
-- **Rust** (https://rustup.rs)
-- **Anthropic API 키** — `ANTHROPIC_API_KEY` 환경변수
-- **Claude Code CLI** — Agent SDK 가 내부적으로 사용
-  ```sh
-  npm install -g @anthropic-ai/claude-code
-  ```
+Tested on Windows 10/11.
 
-Tauri 의존성(Windows의 경우 WebView2)은 https://tauri.app/start/prerequisites/ 참고.
+1. Install [Node.js 20+](https://nodejs.org)
+2. Install Claude Code globally and log in:
+   ```sh
+   npm install -g @anthropic-ai/claude-code
+   claude
+   # → /login → opens browser to authenticate with your Claude account
+   ```
+3. Download the latest `.exe` installer from the [Releases page](https://github.com/lee-jongmyoung/my-claude-terminal/releases/latest) and run it.
+4. Launch from Start Menu. Auto-updates apply silently in the background on future releases.
 
-## 설치
+## Features
 
-```sh
-cd C:\Users\dev.ljm\my-claude-terminal
-npm install
-cd sidecar && npm install && cd ..
+- **Holographic terminal UI** — cyberpunk theme, neural orb status indicator, ambient scanlines
+- **Multi-session tabs** — auto-detected from `~/.claude/projects/` with rename / delete
+- **Real-time telemetry**
+  - Plan-quota usage (5h window + weekly) from the Claude OAuth `/usage` endpoint
+  - 7-day daily token bar chart
+  - Tool-call counter per session
+  - Live context-window meter (0 / 1M)
+- **Rich response rendering**
+  - Markdown (headers, bold, italic, lists, tables, blockquotes)
+  - Syntax-highlighted code blocks (Prism atom-dark theme)
+  - Line-by-line diffs with line numbers for `Edit` calls
+  - Collapsible tool-call cards (Write, Edit, Bash, Read, …)
+- **Per-session model selection** — Opus / Sonnet / Haiku via the in-app dropdown
+- **Auto-update** — silent in-app updater (Tauri updater plugin) signed with Ed25519
+- **Native folder picker** for new sessions
+
+## Architecture
+
+```
+┌──────────────────────────┐  ws://127.0.0.1:7891  ┌────────────────────┐
+│   Tauri shell (Rust)     │  ────────────────────▶│  Sidecar (Node.js) │
+│   React frontend (Vite)  │ ◀──────────────────── │  @anthropic-ai/    │
+│                          │     events / streams   │  claude-agent-sdk  │
+└──────────────────────────┘                        └────────────────────┘
+                                                            │
+                                                            ▼
+                                                   Claude Code CLI
+                                                   (local OAuth session)
 ```
 
-## 개발 실행
+- `src/` — React frontend (Vite, TypeScript)
+- `sidecar/` — Node.js WebSocket bridge to the Agent SDK
+- `src-tauri/` — Tauri native shell (Rust)
 
-환경변수 설정 후:
+## Development
+
+### Prerequisites
+- Node.js 20+
+- Rust toolchain ([rustup.rs](https://rustup.rs))
+- Windows: Visual Studio Build Tools with "Desktop development with C++"
+- Tauri prerequisites: <https://tauri.app/start/prerequisites/>
+
+### Setup
 
 ```powershell
-$env:ANTHROPIC_API_KEY = "sk-ant-..."
+git clone https://github.com/lee-jongmyoung/my-claude-terminal.git
+cd my-claude-terminal
+npm install
+cd sidecar && npm install && cd ..
+
+# One-time CLI installer for the project
+.\install-cli.ps1
+. $PROFILE
 ```
 
-**방법 1 — Tauri 창에서 실행 (권장)**
+### CLI commands
 
-```sh
-npm run tauri dev
-```
+After running `install-cli.ps1`, `claude-os` is available from any PowerShell prompt:
 
-`tauri.conf.json` 의 `beforeDevCommand` 가 `npm run dev` 를 실행하므로
-사이드카(WebSocket :7891)와 Vite(:1420) 둘 다 자동으로 뜹니다.
-
-**방법 2 — 브라우저에서 먼저 확인 (Tauri 없이)**
-
-```sh
-npm run dev
-```
-
-그 다음 브라우저에서 `http://127.0.0.1:1420` 접속.
-
-## 사용법
-
-1. 앱이 뜨면 우측 상단에 `sidecar connected` 표시 확인
-2. 하단 입력창에 프롬프트 입력 (Enter 전송, Shift+Enter 줄바꿈)
-3. 좌측: 대화/툴 호출 스트림
-4. 우측 상단: 에이전트가 `TodoWrite` 호출하면 자동으로 플랜 업데이트
-5. 우측 하단: 토큰·비용 실시간 라인 차트
-
-## 시각화되는 이벤트
-
-| 이벤트 | 어디서 보임 |
+| Command | What it does |
 |---|---|
-| 어시스턴트 텍스트 | Terminal |
-| Extended thinking | Terminal (회색 이탤릭) |
-| 도구 호출 (Read/Edit/Bash 등) | Terminal (🔧 태그) |
-| 도구 결과 | Terminal (✓/❌ 태그) |
-| `TodoWrite` | Plan 패널 |
-| 토큰 사용량 | Usage 차트 + 상단 카드 |
-| 누적 비용 | Usage 패널 헤더 (`$0.0000`) |
+| `claude-os dev` | Dev mode — kills stale processes, builds sidecar if missing, runs `tauri dev` |
+| `claude-os build` | Local production build (`.exe` + `.msi`) |
+| `claude-os release` | Bump patch version → opens Notepad for release notes → commits, tags, pushes |
+| `claude-os release minor` | Same but bumps minor version |
+| `claude-os release major` | Same but bumps major version |
 
-## 가격표 조정
+### Releasing
 
-`sidecar/src/index.ts` 상단의 `PRICE_*_PER_M` 상수를 사용하는 모델에 맞춰 수정하세요.
-기본값은 Opus 4.7 기준이며, Agent SDK 가 `result` 메시지에서 `total_cost_usd` 를
-돌려주면 그 값으로 덮어쓰기 때문에 대개는 그대로 둬도 됩니다.
+`claude-os release` triggers `.github/workflows/release.yml` which:
+1. Builds Tauri + bundles the Node sidecar as resources
+2. Signs the `.exe` + `.msi` with the Ed25519 updater key
+3. Publishes a GitHub release with the tag annotation as the changelog
+4. Generates `latest.json` for the in-app updater
 
-## 빌드 (배포용 바이너리)
+## License
 
-```sh
-npm run tauri build
-```
+[MIT](LICENSE) © contributors.
 
-`src-tauri/target/release/bundle/` 에 인스톨러가 생성됩니다.
+This project uses several third-party packages, each under its own license. Notably:
+- Tauri (Apache-2.0 / MIT)
+- React (MIT)
+- `@anthropic-ai/claude-agent-sdk` (see package's LICENSE)
+- `recharts`, `react-markdown`, `react-syntax-highlighter`, `diff` (all MIT)
 
-> ⚠️ 배포 빌드는 Node.js 사이드카를 따로 번들링해야 합니다.
-> `pkg` 또는 `bun build --compile` 로 단일 바이너리로 만든 뒤
-> `src-tauri/binaries/` 에 두고 `tauri.conf.json` 의 `bundle.externalBin`
-> 으로 등록하는 작업이 필요합니다. (MVP에서는 dev 모드 동작만 검증)
+## Status
 
-## 다음 단계 아이디어
-
-- [ ] Tauri 사이드카 바이너리 번들링 (`pkg` / `bun`)
-- [ ] 세션 저장·재개
-- [ ] 권한 모드 토글 (`bypassPermissions` → `acceptEdits` 등)
-- [ ] MCP 서버 추가 UI
-- [ ] 모델 스위처
-- [ ] 도구 호출 타임라인 시각화
-- [ ] 컨텍스트 사용량 게이지 (1M 윈도우 대비 %)
+Personal hobby project. No support guarantees. Feel free to open issues or fork.
