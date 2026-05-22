@@ -49,7 +49,13 @@ fn spawn_sidecar(app: &tauri::App) {
         }
     }
 
-    let chosen = candidates.iter().find(|p| p.exists()).cloned();
+    let chosen = candidates.iter().find(|p| p.exists()).cloned().map(|p| {
+        // Strip Windows verbatim path prefix `\\?\` because Node.js ESM
+        // module resolution doesn't handle it well.
+        let s = p.to_string_lossy().to_string();
+        let cleaned = s.strip_prefix(r"\\?\").map(|x| x.to_string()).unwrap_or(s);
+        PathBuf::from(cleaned)
+    });
 
     let log_path = std::env::current_exe()
         .ok()
@@ -76,10 +82,16 @@ fn spawn_sidecar(app: &tauri::App) {
     let mut cmd = std::process::Command::new("node");
     cmd.arg(&sidecar_js);
 
-    // Spawn with cwd set to the sidecar dir so node_modules resolution works
+    // Spawn with cwd set to the sidecar dir so node_modules resolution works.
+    // Strip verbatim prefix here too — some node versions choke on `\\?\` cwd.
     if let Some(parent) = sidecar_js.parent() {
-        cmd.current_dir(parent);
-        log.push_str(&format!("cwd: {}\n", parent.display()));
+        let parent_str = parent.to_string_lossy().to_string();
+        let cleaned_parent = parent_str
+            .strip_prefix(r"\\?\")
+            .map(|x| x.to_string())
+            .unwrap_or(parent_str);
+        cmd.current_dir(&cleaned_parent);
+        log.push_str(&format!("cwd: {}\n", cleaned_parent));
     }
 
     // Hide the console window on Windows
