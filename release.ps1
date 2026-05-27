@@ -48,13 +48,19 @@ $lines = ($rawNotes -split "`r?`n") |
 $notes = ($lines -join "`n").Trim()
 
 if ([string]::IsNullOrWhiteSpace($notes)) {
-    $notes = "See commits since previous release."
+    $notes = "Release v$v"
+    Write-Host "    (no notes entered — using default '$notes')" -ForegroundColor Yellow
 }
 
-Write-Host "==> Tagging v$v with notes:" -ForegroundColor Cyan
+# Write tag message to a temp file so multi-line + unicode survives the shell
+$tagMsgFile = Join-Path $env:TEMP "claude-os-tag-$v.txt"
+[System.IO.File]::WriteAllText($tagMsgFile, $notes, $utf8WithBom)
+
+Write-Host "==> Tagging v$v (annotated) with notes:" -ForegroundColor Cyan
 Write-Host $notes -ForegroundColor DarkGray
-git tag -a "v$v" -m $notes
+git tag -a "v$v" -F $tagMsgFile
 Remove-Item $notesFile -ErrorAction SilentlyContinue
+Remove-Item $tagMsgFile -ErrorAction SilentlyContinue
 
 Write-Host "==> Pushing to GitHub" -ForegroundColor Cyan
 git push

@@ -22,15 +22,24 @@ jobs:
         id: notes
         shell: bash
         run: |
-          MSG=$(git for-each-ref refs/tags/${{ github.ref_name }} --format='%(contents)' | sed '/^-----BEGIN/,$d')
-          if [ -z "$MSG" ] || [ "$MSG" = "${{ github.ref_name }}" ]; then
+          TAG="${{ github.ref_name }}"
+          TYPE=$(git cat-file -t "$TAG" 2>/dev/null || echo "")
+          MSG=""
+          if [ "$TYPE" = "tag" ]; then
+            # Annotated tag — extract the tag's own message (subject + body),
+            # skipping any PGP signature blocks if present.
+            MSG=$(git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' "$TAG" | sed '/^-----BEGIN/,$d')
+            MSG=$(echo "$MSG" | sed -e 's/[[:space:]]*$//' -e '/./,$!d')
+          fi
+          # If still empty, fall back to last commit subject (better than blank).
+          if [ -z "$MSG" ]; then
             MSG="See commits since previous release."
           fi
           {
             echo "body<<NOTES_EOF"
-            echo "## What's changed"
-            echo ""
             echo "$MSG"
+            echo ""
+            echo "---"
             echo ""
             echo "### Install"
             echo "Download the \`.exe\` installer below and run it. Requires Node.js 20+ and \`@anthropic-ai/claude-code\` installed globally + logged in."

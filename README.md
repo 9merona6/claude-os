@@ -36,7 +36,7 @@ Windows 10/11 에서 테스트되었습니다.
    claude
    # → /login → 브라우저에서 Claude 계정으로 인증
    ```
-3. [Releases 페이지](https://github.com/lee-jongmyoung/my-claude-terminal/releases/latest) 에서 최신 `.exe` 인스톨러를 받아 실행
+3. [Releases 페이지](https://github.com/9merona6/claude-os/releases/latest) 에서 최신 `.exe` 인스톨러를 받아 실행
 4. 시작 메뉴에서 실행. 이후 업데이트는 백그라운드에서 자동으로(완전 무음) 적용됩니다.
 
 ## 주요 기능

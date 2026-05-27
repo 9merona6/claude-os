@@ -77,15 +77,22 @@ function LeftPanelImpl({
     for (const t of tabs) if (t.last_session_id) s.add(t.last_session_id);
     return s;
   }, [tabs]);
-  // For each project folder, keep only the most-recent session that isn't
-  // already linked to a user tab. Without this dedup, every folder showed all
-  // its historical .jsonl files, cluttering the list with duplicates.
+  // For each project folder, keep the session with the most messages. Ties
+  // broken by recency. Why messages-first: a stray `claude` CLI invocation in
+  // the same folder creates a new tiny session_id that would otherwise hide
+  // the substantive conversation behind a 1-msg card, which looks like data
+  // loss to the user (the big history is still on disk, just not surfaced).
   const standaloneSessions = useMemo(() => {
     const byFolder = new Map<string, ClaudeSession>();
     for (const s of claudeSessions) {
       if (tabSessionIds.has(s.session_id)) continue;
       const existing = byFolder.get(s.cwd);
-      if (!existing || s.last_activity_ms > existing.last_activity_ms) {
+      if (
+        !existing ||
+        s.message_count > existing.message_count ||
+        (s.message_count === existing.message_count &&
+          s.last_activity_ms > existing.last_activity_ms)
+      ) {
         byFolder.set(s.cwd, s);
       }
     }
